@@ -1,0 +1,16 @@
+language:
+  go
+
+go:
+  - master
+
+env:
+  global:
+    GO111MODULE: "on"
+
+
+script: true
+
+
+notifications:
+  email: true
