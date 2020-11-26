@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-func TestTrans(t *testing.T){
+func TestTrans(t *testing.T) {
 	a := func(asr *asr.ASR, speech string, response chan string) {
 		for {
 			resp, err := asr.Trans(speech)
@@ -34,13 +34,14 @@ func TestTrans(t *testing.T){
 	response := make(chan string, 2)
 
 	go a(asr, speech, response)
+	go a(asr, speech, response)
 	before := time.Now().Unix()
+	count := 0
 	for {
-		result := <- response
-		t.Log(time.Now().Unix(), (time.Now().Unix() - before))
-		before = time.Now().Unix()
-		t.Logf(result)
-		
+		<- response
+		count += 1
+		speed := float64(time.Now().Unix() - before) / float64(count)
+		t.Log(speed)
 	}
 
 }
