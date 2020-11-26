@@ -18,35 +18,22 @@ import (
 
 const (
 	urlBaidu = "http://www.baidu.com"
-	urlBaike = "http://baike.baidu.com"
 	userAgent = "Mozilla/5.0 BaiduSpider/2.0"
 )
 
 type BaiduSearchProcesser struct {
 }
 
-type BaikeSearchProcesser struct {
-}
-
 func NewBaiduSearchProcesser() *BaiduSearchProcesser {
 	return &BaiduSearchProcesser{}
-}
-
-func NewBaikeSearchProcesser() *BaikeSearchProcesser {
-	return &BaikeSearchProcesser{}
 }
 
 func (this *BaiduSearchProcesser) Finish() {
 	return
 }
 
-func (this *BaikeSearchProcesser) Finish() {
-	return
-}
-
 var (
 	spBaidu = spider.NewSpider(NewBaiduSearchProcesser(), "BaiduSearch")
-	spBaike = spider.NewSpider(NewBaikeSearchProcesser(), "BaikeSearch")
 )
 
 func (this *BaiduSearchProcesser) Process(p *page.Page) {
@@ -67,40 +54,16 @@ func (this *BaiduSearchProcesser) Process(p *page.Page) {
 	p.AddField("answer", answer)
 }
 
-func (this *BaikeSearchProcesser) Process(p *page.Page) {
-	if !p.IsSucc() {
-		println(p.Errormsg())
-		return
-	}
-
-	query := p.GetHtmlParser()
-	
-	abstract := query.Find(".lemma-summary .para").Text()
-	abstract = strings.Trim(abstract, " \t\n\r")
-	// the entity we want to save by Pipeline
-	p.AddField("answer", abstract)
-}
-
-
 func SearchEngineAnswer(question string) (string, error) {
-	baiduAnswer := make(chan string, 1)
-	baikeAnswer := make(chan string, 1)
-
-	go baiduSearch(question, baiduAnswer)
-	go baikeSearch(question, baikeAnswer)
+	answer := baiduSearch(question)
 	
-	answer := <- baiduAnswer
-	if answer != "" {
-		return answer, nil
-	}
-	answer = <- baikeAnswer
 	if answer != "" {
 		return answer, nil
 	}
 	return "", errors.New("empty answer")
 }
 
-func baiduSearch(question string, baiduAnswer chan string) {
+func baiduSearch(question string) string {
 	
 	// GetWithParams Params:
 	// 1. url
@@ -115,13 +78,5 @@ func baiduSearch(question string, baiduAnswer chan string) {
 	req := request.NewRequest(urlFinal, "html", "", "GET", "", nil, nil, nil, nil)
 	pageItems := spBaidu.GetByRequest(req)
 
-	baiduAnswer <- pageItems.GetAll()["answer"]
-}
-
-func baikeSearch(question string, baikeAnswer chan string) {
-	urlFinal := urlBaike + "/item/" + question
-
-	req := request.NewRequest(urlFinal, "html", "", "GET", "", nil, nil, nil, nil)
-	pageItems := spBaike.GetByRequest(req)
-	baikeAnswer <- pageItems.GetAll()["answer"]
+	return pageItems.GetAll()["answer"]
 }
