@@ -3,26 +3,23 @@
  * Date: 2020-11-23
  * Time: 11:25
  */
- package asr
+package asr
 
- import (
-	//  "runtime"
- )
- 
- type ASR struct {
- 
- }
- 
- func New() *ASR {
-	 return new(ASR)
- }
- 
- func (asr *ASR) Sound2Text() {
- 
- }
- 
- func (asr *ASR) Run() {
+import (
+//  "runtime"
+)
 
- }
+type ASR struct {
+
+}
+
+func New() *ASR {
+	return new(ASR)
+}
+
+
+func (asr *ASR) Run() {
+
+}
  
  

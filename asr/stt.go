@@ -5,6 +5,7 @@ import (
     "github.com/shiguanghuxian/txai" // 引入sdk
 )
 
+// todo: 这里之后需要修改成config的形式
 var (
     appID  = "2159987778"
     appKey = "e51xT4Si6hBfi5hN"
