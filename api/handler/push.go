@@ -6,12 +6,13 @@
 package handler
 
 import (
+	"SLU-System/api/rpc"
+	"SLU-System/config"
+	"SLU-System/proto"
+	"SLU-System/tools"
+
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
-	"gochat/api/rpc"
-	"gochat/config"
-	"gochat/proto"
-	"gochat/tools"
 	"strconv"
 )
 
@@ -100,6 +101,29 @@ func PushRoom(c *gin.Context) {
 	return
 }
 
+type FormCount struct {
+	RoomId int `form:"roomId" json:"roomId" binding:"required"`
+}
+
+func Count(c *gin.Context) {
+	var formCount FormCount
+	if err := c.ShouldBindBodyWith(&formCount, binding.JSON); err != nil {
+		tools.FailWithMsg(c, err.Error())
+		return
+	}
+	roomId := formCount.RoomId
+	req := &proto.Send{
+		RoomId: roomId,
+		Op:     config.OpRoomCountSend,
+	}
+	code, msg := rpc.RpcLogicObj.Count(req)
+	if code == tools.CodeFail {
+		tools.FailWithMsg(c, "rpc get room count fail!")
+		return
+	}
+	tools.SuccessWithMsg(c, "ok", msg)
+	return
+}
 
 type FormRoomInfo struct {
 	RoomId int `form:"roomId" json:"roomId" binding:"required"`

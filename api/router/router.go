@@ -6,12 +6,14 @@
 package router
 
 import (
+	"SLU-System/api/handler"
+	"SLU-System/api/rpc"
+	"SLU-System/proto"
+	"SLU-System/tools"
+
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
-	"gochat/api/handler"
-	"gochat/api/rpc"
-	"gochat/proto"
-	"gochat/tools"
+
 	"net/http"
 )
 
@@ -23,13 +25,13 @@ func Register() *gin.Engine {
 	r.NoRoute(func(c *gin.Context) {
 		tools.FailWithMsg(c, "please check request url!")
 	}) 
-	return return
+	return r
 }
 
 func initUserRouter(r *gin.Engine) {
 	userGroup := r.Group("/user")
-	userGroup.Post("/login", handler.Login)
-	userGroup.Post("/register", handler.Register)
+	userGroup.POST("/login", handler.Login)
+	userGroup.POST("/register", handler.Register)
 	userGroup.Use(CheckSessionId())
 	{
 		userGroup.POST("/checkAuth", handler.CheckAuth)
@@ -39,10 +41,11 @@ func initUserRouter(r *gin.Engine) {
 
 func initPushRouter(r *gin.Engine) {
 	pushGroup := r.Group("/push")
-	pushGroup.Use(checkSessionid())
+	pushGroup.Use(CheckSessionId())
 	{
 		pushGroup.POST("/push", handler.Push)
 		pushGroup.POST("/pushRoom", handler.PushRoom)
+		pushGroup.POST("/count", handler.Count)
 		pushGroup.POST("/getRoomInfo", handler.GetRoomInfo)
 	}
 }

@@ -6,11 +6,13 @@
 package handler
 
 import (
+	"SLU-System/api/rpc"
+	"SLU-System/proto"
+	"SLU-System/tools"
+
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
-	"gochat/api/rpc"
-	"gochat/proto"
-	"gochat/tools"
+
 )
 
 type FormLogin struct {
