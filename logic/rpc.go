@@ -347,3 +347,84 @@ func (rpc *RpcLogic) DisConnect(ctx context.Context, args *proto.DisConnectReque
 	}
 	return
 }
+
+/**
+ get the answer by slu - text
+*/
+func (rpc *RpcLogic) SluContent(ctx context.Context, args *proto.Send, reply *proto.SuccessReply) (err error) {
+	reply.Code = config.FailReplyCode
+	sendData := args
+	roomId := sendData.RoomId
+	logic := new(Logic)
+	roomUserInfo := make(map[string]string)
+	roomUserKey := logic.getRoomUserKey(strconv.Itoa(roomId))
+	roomUserInfo, err = RedisClient.HGetAll(roomUserKey).Result()
+	if err != nil {
+		logrus.Errorf("logic,PushRoom redis hGetAll err:%s", err.Error())
+		return
+	}
+	//if len(roomUserInfo) == 0 {
+	//	return errors.New("no this user")
+	//}
+
+	var bodyBytes []byte
+	sendData.RoomId = roomId
+	sendData.Msg = args.Msg
+	sendData.FromUserId = args.FromUserId
+	sendData.FromUserName = args.FromUserName
+	sendData.Op = config.OpRoomSend
+	sendData.CreateTime = tools.GetNowDateTime()
+	bodyBytes, err = json.Marshal(sendData)
+	if err != nil {
+		logrus.Errorf("logic,PushRoom Marshal err:%s", err.Error())
+		return
+	}
+	err = logic.RedisSluContent(roomId, len(roomUserInfo), roomUserInfo, bodyBytes)
+	if err != nil {
+		logrus.Errorf("logic,PushRoom err:%s", err.Error())
+		return
+	}
+	reply.Code = config.SuccessReplyCode
+	return
+}
+
+/**
+ get the answer by slu - audio
+*/
+func (rpc *RpcLogic) SluAudio(ctx context.Context, args *proto.Send, reply *proto.SuccessReply) (err error) {
+	reply.Code = config.FailReplyCode
+	sendData := args
+	roomId := sendData.RoomId
+	logic := new(Logic)
+	roomUserInfo := make(map[string]string)
+	roomUserKey := logic.getRoomUserKey(strconv.Itoa(roomId))
+	roomUserInfo, err = RedisClient.HGetAll(roomUserKey).Result()
+	if err != nil {
+		logrus.Errorf("logic,PushRoom redis hGetAll err:%s", err.Error())
+		return
+	}
+	//if len(roomUserInfo) == 0 {
+	//	return errors.New("no this user")
+	//}
+
+	var bodyBytes []byte
+	sendData.RoomId = roomId
+	sendData.Msg = args.Msg
+	sendData.FromUserId = args.FromUserId
+	sendData.FromUserName = args.FromUserName
+	sendData.Op = config.OpRoomSend
+	sendData.CreateTime = tools.GetNowDateTime()
+	bodyBytes, err = json.Marshal(sendData)
+	logrus.Infof("logic, bodybytes: %s", string(bodyBytes))
+	if err != nil {
+		logrus.Errorf("logic,PushRoom Marshal err:%s", err.Error())
+		return
+	}
+	err = logic.RedisSluAudio(roomId, len(roomUserInfo), roomUserInfo, bodyBytes)
+	if err != nil {
+		logrus.Errorf("logic,PushRoom err:%s", err.Error())
+		return
+	}
+	reply.Code = config.SuccessReplyCode
+	return
+}

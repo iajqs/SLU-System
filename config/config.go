@@ -31,6 +31,9 @@ const (
 	OpRoomSend            = 3 // send to room
 	OpRoomCountSend       = 4 // get online user count
 	OpRoomInfoSend        = 5 // send info to room
+	OpSluContent 		  = 6 // SLU by text
+	OpSluAudio			  = 7 // SLU by audio
+
 )
 
 type Config struct {

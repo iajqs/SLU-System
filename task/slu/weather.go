@@ -39,10 +39,6 @@ func (this *WeatherProcesser) Finish() {
 	return
 }
 
-var (
-	spWeather = spider.NewSpider(NewWeatherProcesser(), "Weather")
-)
-
 func (this *WeatherProcesser) Process(p *page.Page) {
 	
 	if !p.IsSucc() {
@@ -93,13 +89,17 @@ func WeatherAnswer(question string) (proto.Weather, error) {
 
 
 func weatherSearch(question string) (proto.Weather, error) {
+	spWeather := spider.NewSpider(NewWeatherProcesser(), "Weather")
 	urlFinal := urlBaidu + "/s?" + "wd=" + question
 
 	req := request.NewRequest(urlFinal, "html", "", "GET", "", nil, nil, nil, nil)
 	pageItems := spWeather.GetByRequest(req)
 
+	if pageItems == nil {
+		return proto.Weather{}, errors.New("empty answer")
+	}
 	result := pageItems.GetAll()
-	
+
 	code, err := strconv.Atoi(result["code"])
 	if err != nil {
 		return proto.Weather{}, err

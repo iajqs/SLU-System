@@ -42,7 +42,7 @@ func (c *Chat) Run() {
 	gin.SetMode(runMode)
 	apiConfig := config.Conf.Api
 	port := apiConfig.ApiBase.ListenPort
-	bind := apiConfig.ApiBase.Bind
+	// bind := apiConfig.ApiBase.Bind
 	flag.Parse()
 
 	srv := &http.Server {

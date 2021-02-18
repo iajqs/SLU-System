@@ -13,6 +13,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
+	// "github.com/sirupsen/logrus"
 
 	"net/http"
 )
@@ -47,6 +48,8 @@ func initPushRouter(r *gin.Engine) {
 		pushGroup.POST("/pushRoom", handler.PushRoom)
 		pushGroup.POST("/count", handler.Count)
 		pushGroup.POST("/getRoomInfo", handler.GetRoomInfo)
+		pushGroup.POST("/sluContent", handler.SluContent)
+		pushGroup.POST("/sluAudio", handler.SluAudio)
 	}
 }
 

@@ -135,3 +135,72 @@ func (task *Task) broadcastRoomInfoToConnect(roomId int, roomUserInfo map[string
 		logrus.Infof("broadcastRoomInfoToConnect rpc  reply %v", reply)
 	}
 }
+
+func (task *Task) broadcastCSluAnswerToConnect(roomId int, msg []byte) {
+	m := &proto.Send{}
+	if err := json.Unmarshal(msg, m); err != nil {
+		logrus.Infof(" json.Unmarshal err:%v ", err)
+	}
+	answer, source, _ := task.SLUAnswer(string(m.Msg))
+	// logrus.Infof(string(msg))
+	logrus.Infof("answer %s, source %s", answer, source)
+	
+	m.Msg = answer
+	m.FromUserId = 3
+	m.FromUserName = "robot"
+	mByte, err := json.Marshal(m)
+	if err != nil {
+		logrus.Errorf(" json.marshal err:: %s", err.Error())
+		return
+	}
+	pushRoomMsgReq := &proto.PushRoomMsgRequest{
+		RoomId: roomId,
+		Msg: proto.Msg{
+			Ver:       config.MsgVersion,
+			Operation: config.OpSluContent,
+			SeqId:     tools.GetSnowflakeId(),
+			Body:      mByte,
+		},
+	}
+	reply := &proto.SuccessReply{}
+	for _, rpc := range RpcConnectClientList {
+		logrus.Infof("broadcastCSluAnswerToConnect rpc  %v", rpc)
+		rpc.Call(context.Background(), "PushRoomMsg", pushRoomMsgReq, reply)
+		logrus.Infof("reply %s", reply.Msg)
+	}
+}
+
+func (task *Task) broadcastAudioSluAnswerToConnect(roomId int, msg []byte) {
+	logrus.Infof("audio msg: %s", string(msg))
+	m := &proto.Send{}
+	if err := json.Unmarshal(msg, m); err != nil {
+		logrus.Infof(" json.Unmarshal err:%v ", err)
+	}
+	text, err := task.Trans(string(m.Msg))
+	if err != nil {
+		logrus.Errorf(" trans audio to text err :: %s", err.Error())
+	}
+	
+	m.Msg = text
+	mByte, err := json.Marshal(m)
+	if err != nil {
+		logrus.Errorf(" json.marshal err:: %s", err.Error())
+		return
+	}
+	pushRoomMsgReq := &proto.PushRoomMsgRequest{
+		RoomId: roomId,
+		Msg: proto.Msg{
+			Ver:       config.MsgVersion,
+			Operation: config.OpSluContent,
+			SeqId:     tools.GetSnowflakeId(),
+			Body:      mByte,
+		},
+	}
+	reply := &proto.SuccessReply{}
+	for _, rpc := range RpcConnectClientList {
+		logrus.Infof("broadcastCSluAnswerToConnect rpc  %v", rpc)
+		rpc.Call(context.Background(), "PushRoomMsg", pushRoomMsgReq, reply)
+		logrus.Infof("reply %s", reply.Msg)
+	}
+	task.broadcastCSluAnswerToConnect(roomId, mByte)
+}

@@ -6,30 +6,38 @@
 package slu
 
 import (
+	"github.com/bitly/go-simplejson"
+
+	"net/url"
 	"net/http"
-	"fmt"
-	"bytes"
 	"io/ioutil"
+	"errors"
 )
 
 var (
-	urlModel = "http://192.168.1.66:8080/nlp"
+	urlModel = "http://127.0.0.1:5000/nlp"
 	client = &http.Client{}
 )
 
-func ModelAnswer(question string) (string, []string, error) {
-	requestBody := fmt.Sprintf(`{
-		"question": "%s"
-	}`, question)
-	var jsonStr = []byte(requestBody)
-	req, err := http.NewRequest("POST", urlModel, bytes.NewBuffer(jsonStr))
-	req.Header.Set("Content-Type", "application/json")
-	resp, err := client.Do(req)
+func ModelAnswer(question string) (string, string, error) {
+	paras := url.Values{"question": {question}}
+	urlReal := urlModel + "?" + paras.Encode()
+	resp, err := http.Get(urlReal)
 	if err != nil {
-		return "", []string{}, err
+		return "", "", err
 	}
 	defer resp.Body.Close()
 
 	body, _ := ioutil.ReadAll(resp.Body)
-	return string(body), []string{}, nil
+	
+	js, err := simplejson.NewJson(body)
+	if err != nil {
+		return "", "", errors.New("json 解析失败")
+	}
+	intent, err := js.Get("intent").String()
+	if err != nil {
+		return "", "", errors.New("没有意图结果")
+	}
+	keywords, err := js.Get("keywords").String()
+	return intent, keywords, nil
 }

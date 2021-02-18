@@ -125,3 +125,19 @@ func (rpc *RpcLogic) GetRoomInfo(req *proto.Send) (code int, msg string) {
 	msg = reply.Msg
 	return
 }
+
+func (rpc *RpcLogic) SluContent(req *proto.Send) (code int, msg string) {
+	reply := &proto.SuccessReply{}
+	LogicRpcClient.Call(context.Background(), "SluContent", req, reply)
+	code = reply.Code
+	msg = reply.Msg
+	return
+}
+
+func (rpc *RpcLogic) SluAudio(req *proto.Send) (code int, msg string) {
+	reply := &proto.SuccessReply{}
+	LogicRpcClient.Call(context.Background(), "SluAudio", req, reply)
+	code = reply.Code
+	msg = reply.Msg
+	return
+}

@@ -9,12 +9,13 @@ import (
 	"SLU-System/task/slu"
 	"SLU-System/proto"
 
-	// "github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 	
 	// "os"
 	"time"
 	// "fmt"
 	"errors"
+	"strings"
 )
 
 func ReluAnswer(question string) (string, error) {
@@ -49,18 +50,20 @@ func MusicAnswer(question string) (string, error) {
 	return slu.MusicAnswer(question)
 }
 
-func ModelAnswer(question string) (string, []string, error) {
+func ModelAnswer(question string) (string, string, error) {
 	return slu.ModelAnswer(question)
 }
 
 func (task *Task) SLUAnswer(question string) (string, string, error) {
+	question = strings.Trim(question, " \t\n\r")
 	cReluAnswer := make(chan string, 1)
 	cChatAnswer := make(chan string, 1)
 	cSearchEngineAnswer := make(chan string, 1)
 	cBaikeAnswer := make(chan string, 1)
 	cWeatherAnswer := make(chan proto.Weather, 1)
 	cMusicAnswer := make(chan string, 1)
-	cModelAnswer := make(chan string, 1)
+	cModelIntentAnswer := make(chan string, 1)
+	cModelKeywordsAnswer := make(chan string, 1)
 	cEnd := make(chan int, 1)
 	go func(question string, cReluAnswer chan string) {
 		answer, _ := ReluAnswer(question)
@@ -110,18 +113,19 @@ func (task *Task) SLUAnswer(question string) (string, string, error) {
 		cMusicAnswer <- answer
 	} (question, cMusicAnswer)
 
-	go func(question string, cModelAnswer chan string) {
-		intent, _, _ := ModelAnswer(question)
-		// if err != nil {
-		// 	logrus.Info("模型出错: ", , err.Error())
-		// }
-		cModelAnswer <- intent
-	} (question, cModelAnswer)
+	go func(question string, cModelIntentAnswer chan string, cModelKeywordsAnswer chan string) {
+		intent, keywords, err := ModelAnswer(question)
+		if err != nil {
+			logrus.Infof("模型出错: ", err.Error())
+		}
+		cModelIntentAnswer <- intent
+		cModelKeywordsAnswer <- keywords
+	} (question, cModelIntentAnswer, cModelKeywordsAnswer)
 
 	now := int(time.Now().Unix())
 	go func(now int, cEnd chan int) {
 		for {
-			if int(time.Now().Unix()) - now >= 1 {
+			if int(time.Now().Unix()) - now >= 2 {
 				cEnd <- 1
 				return
 			}
@@ -135,7 +139,7 @@ func (task *Task) SLUAnswer(question string) (string, string, error) {
 	weather := proto.Weather{}
 	music := ""
 	model := ""
-
+	modelKeywords := ""
 	for {
 		select {
 		// case relu = <- cReluAnswer:
@@ -150,14 +154,20 @@ func (task *Task) SLUAnswer(question string) (string, string, error) {
 			// fmt.Println("weather answer :", weather.ToString())
 		case music = <- cMusicAnswer:
 			// fmt.Println("music answer :", music)
-		case model = <- cModelAnswer:
+		case model = <- cModelIntentAnswer:
 			// fmt.Println("model answer :", model)
+		case modelKeywords = <- cModelKeywordsAnswer:
+
 		case <- cEnd:
 			baike = "" // 移除百科查询结果
 			if model != "" {
 				if model == "weather" &&  weather.Code != 404 && weather.TemperatureNow != ""{
 					return weather.ToString(), "weather", nil
-				} else if model == "music" && music != "" {
+				} else if model == "music"{
+					if modelKeywords != ""{
+						music, _ = MusicAnswer(modelKeywords)
+						return music, "music", nil
+					}
 					return music, "music", nil
 				} else if model == "poetry" && baidu != "" {
 					return baidu, "baidu", nil

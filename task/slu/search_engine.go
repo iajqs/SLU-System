@@ -32,9 +32,6 @@ func (this *BaiduSearchProcesser) Finish() {
 	return
 }
 
-var (
-	spBaidu = spider.NewSpider(NewBaiduSearchProcesser(), "BaiduSearch")
-)
 
 func (this *BaiduSearchProcesser) Process(p *page.Page) {
 	if !p.IsSucc() {
@@ -73,10 +70,13 @@ func baiduSearch(question string) string {
 	// 5. The postdata is body string sent to server
 	// 6. The header is header for http request.
 	// 7. Cookies
+	spBaidu := spider.NewSpider(NewBaiduSearchProcesser(), "BaiduSearch")
 	urlFinal := urlBaidu + "/s?" + "wd=" + question
 	// urlFinal = "http://baike.baidu.com/view/1628025.htm?fromtitle=http&fromid=243074&type=syn"
 	req := request.NewRequest(urlFinal, "html", "", "GET", "", nil, nil, nil, nil)
 	pageItems := spBaidu.GetByRequest(req)
-
+	if pageItems == nil {
+		return ""
+	}
 	return pageItems.GetAll()["answer"]
 }

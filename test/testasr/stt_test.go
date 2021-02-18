@@ -28,7 +28,7 @@ func TestTrans(t *testing.T) {
 		t.Error(err.Error())
 	}
 	speech := base64.StdEncoding.EncodeToString(body)
-
+	// t.Log(body[1000:2000])
 	t.Log(time.Now())
 
 	response := make(chan string, 2)
@@ -38,7 +38,8 @@ func TestTrans(t *testing.T) {
 	before := time.Now().Unix()
 	count := 0
 	for {
-		<- response
+		result := <- response
+		t.Log(result)
 		count += 1
 		speed := float64(time.Now().Unix() - before) / float64(count)
 		t.Log(speed)

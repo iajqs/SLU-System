@@ -164,6 +164,49 @@ func (logic *Logic) RedisPushRoomInfo(roomId int, count int, roomUserInfo map[st
 	return
 }
 
+func (logic *Logic) RedisSluContent(roomId int, count int, RoomUserInfo map[string]string, msg []byte) (err error) {
+	var redisMsg = &proto.RedisMsg{
+		Op:           config.OpSluContent,
+		RoomId:       roomId,
+		Count:        count,
+		Msg:          msg,
+		RoomUserInfo: RoomUserInfo,
+	}
+	redisMsgByte, err := json.Marshal(redisMsg)
+	if err != nil {
+		logrus.Errorf("logic,RedisPublishRoomInfo redisMsg error : %s", err.Error())
+		return
+	}
+	err = RedisClient.Publish(config.QueueName, redisMsgByte).Err()
+	if err != nil {
+		logrus.Errorf("logic,RedisPublishRoomInfo redisMsg error : %s", err.Error())
+		return
+	}
+	return
+}
+
+func (logic *Logic) RedisSluAudio(roomId int, count int, RoomUserInfo map[string]string, msg []byte) (err error) {
+	var redisMsg = &proto.RedisMsg{
+		Op:           config.OpSluAudio,
+		RoomId:       roomId,
+		Count:        count,
+		Msg:          msg,
+		RoomUserInfo: RoomUserInfo,
+	}
+	redisMsgByte, err := json.Marshal(redisMsg)
+	if err != nil {
+		logrus.Errorf("logic,RedisPublishRoomInfo redisMsg error : %s", err.Error())
+		return
+	}
+	err = RedisClient.Publish(config.QueueName, redisMsgByte).Err()
+	if err != nil {
+		logrus.Errorf("logic,RedisPublishRoomInfo redisMsg error : %s", err.Error())
+		return
+	}
+	return
+}
+
+
 func (logic *Logic) getRoomUserKey(authKey string) string {
 	var returnKey bytes.Buffer
 	returnKey.WriteString(config.RedisRoomPrefix)

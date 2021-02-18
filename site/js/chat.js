@@ -1,4 +1,7 @@
 let websocket = new WebSocket(socketUrl);
+let recorder;
+// let audio = document.querySelector('audio');
+
 $(document).ready(function () {
     let auth = getLocalStorage("authToken");
     let jsonData = {"authToken": auth};
@@ -124,6 +127,23 @@ function send() {
         success: function (result) {
             if (result.code == 0) {
                 // send ok
+                $.ajax({
+                    type: "POST",
+                    dataType: "json",
+                    url: apiUrl + "/push/sluContent",
+                    data: JSON.stringify(jsonData),
+                    success: function (result) {
+                        if (result.code == 0) {
+                            // send ok
+                        } else {
+                            swal("please login or register account!");
+                            window.location.href = "/register.html";
+                        }
+                    },
+                    error: function () {
+                        swal("sorry, exception！");
+                    }
+                });
             } else {
                 swal("please login or register account!");
                 window.location.href = "/register.html";
@@ -133,8 +153,35 @@ function send() {
             swal("sorry, exception！");
         }
     });
+    
 }
 
+function startRecording() {
+    HZRecorder.get(function (rec) {
+        recorder = rec;
+        recorder.start();
+    });
+}
+
+function uploadAudio() {
+    recorder.upload(apiUrl + "/push/sluAudio", 7, 1, getLocalStorage("authToken"), function (state, e) {
+        switch (state) {
+            case 'uploading':
+                //var percentComplete = Math.round(e.loaded * 100 / e.total) + '%';
+                break;
+            case 'ok':
+                // alert(e.target.responseText);
+                // alert("上传成功");
+                break;
+            case 'error':
+                alert("上传失败");
+                break;
+            case 'cancel':
+                alert("上传被取消");
+                break;
+        }
+    });
+}
 
 function logout() {
     let jsonData = {authToken: getLocalStorage("authToken")};

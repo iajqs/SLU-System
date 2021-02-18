@@ -13,7 +13,14 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
+	"github.com/sirupsen/logrus"
+
 	"strconv"
+	// "fmt"
+	// "strings"
+	"encoding/base64"
+	"os"
+	// "net/http"
 )
 
 type FormPush struct {
@@ -65,9 +72,9 @@ func Push(c *gin.Context) {
 }
 
 type FormRoom struct {
-	AuthToken string `form:"authToken" json:"authToken" binding:"required"`
 	Msg       string `form:"msg" json:"msg" binding:"required"`
 	RoomId    int    `form:"roomId" json:"roomId" binding:"required"`
+	AuthToken string `form:"authToken" json:"authToken" binding:"required"`
 }
 
 func PushRoom(c *gin.Context) {
@@ -143,6 +150,81 @@ func GetRoomInfo(c *gin.Context) {
 	code, msg := rpc.RpcLogicObj.GetRoomInfo(req)
 	if code == tools.CodeFail {
 		tools.FailWithMsg(c, "rpc get room info fail!")
+		return
+	}
+	tools.SuccessWithMsg(c, "ok", msg)
+	return
+}
+
+func SluContent(c *gin.Context) {
+	logrus.Infof("SluContent\n")
+	var formRoom FormRoom
+	if err := c.ShouldBindBodyWith(&formRoom, binding.JSON); err != nil {
+		tools.FailWithMsg(c, err.Error())
+		return
+	}
+	authToken := formRoom.AuthToken
+	msg := formRoom.Msg
+
+	roomId := formRoom.RoomId
+	checkAuthReq := &proto.CheckAuthRequest{AuthToken: authToken}
+
+	authCode, fromUserId, fromUserName := rpc.RpcLogicObj.CheckAuth(checkAuthReq)
+	if authCode == tools.CodeFail {
+		tools.FailWithMsg(c, "rpc fail get self info")
+		return
+	}
+	req := &proto.Send{
+		Msg:          msg,
+		FromUserId:   fromUserId,
+		FromUserName: fromUserName,
+		RoomId:       roomId,
+		Op:           config.OpRoomSend,
+	}
+	code, msg := rpc.RpcLogicObj.SluContent(req)
+	if code == tools.CodeFail {
+		tools.FailWithMsg(c, "rpc push room msg fail!")
+		return
+	}
+	tools.SuccessWithMsg(c, "ok", msg)
+	return
+}
+
+func SluAudio(c *gin.Context) {
+	logrus.Infof("SluAudio\n")
+	var formRoom FormRoom
+	if err := c.ShouldBindBodyWith(&formRoom, binding.JSON); err != nil {
+		tools.FailWithMsg(c, err.Error())
+		return
+	}
+	
+	authToken := formRoom.AuthToken
+	roomId := formRoom.RoomId
+	msg := formRoom.Msg
+	msgByte, _ := base64.StdEncoding.DecodeString(msg)
+	// fmt.Println(msgByte)
+
+	file, _ := os.OpenFile("test.pcm", os.O_WRONLY|os.O_TRUNC|os.O_CREATE, 0666)
+    defer file.Close()
+	file.Write(msgByte)
+	logrus.Infof("写入文件完成")
+	checkAuthReq := &proto.CheckAuthRequest{AuthToken: authToken}
+
+	authCode, fromUserId, fromUserName := rpc.RpcLogicObj.CheckAuth(checkAuthReq)
+	if authCode == tools.CodeFail {
+		tools.FailWithMsg(c, "rpc fail get self info")
+		return
+	}
+	req := &proto.Send{
+		Msg:          msg,
+		FromUserId:   fromUserId,
+		FromUserName: fromUserName,
+		RoomId:       roomId,
+		Op:           config.OpRoomSend,
+	}
+	code, msg := rpc.RpcLogicObj.SluAudio(req)
+	if code == tools.CodeFail {
+		tools.FailWithMsg(c, "rpc push room msg fail!")
 		return
 	}
 	tools.SuccessWithMsg(c, "ok", msg)

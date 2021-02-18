@@ -32,10 +32,6 @@ func (this *BaikeSearchProcesser) Finish() {
 	return
 }
 
-var (
-	spBaike = spider.NewSpider(NewBaikeSearchProcesser(), "BaikeSearch")
-)
-
 func (this *BaikeSearchProcesser) Process(p *page.Page) {
 	if !p.IsSucc() {
 		println(p.Errormsg())
@@ -61,9 +57,13 @@ func BaikeAnswer(question string) (string, error) {
 }
 
 func baikeSearch(question string) string {
+	spBaike := spider.NewSpider(NewBaikeSearchProcesser(), "BaikeSearch")
 	urlFinal := urlBaike + "/item/" + question
 
 	req := request.NewRequest(urlFinal, "html", "", "GET", "", nil, nil, nil, nil)
 	pageItems := spBaike.GetByRequest(req)
+	if pageItems == nil {
+		return ""
+	}
 	return pageItems.GetAll()["answer"]
 }
